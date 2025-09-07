@@ -12,7 +12,12 @@ def sigmoid(z):
     Args:
         z: A scalar or numpy array of any size
     """
-    return [1 if x > 0 else 0 for x in z]
+    if isinstance(z, np.ndarray):
+        result = list(z)
+        return np.ndarray([1 if x > 0 else 0 for x in result])
+    
+    else:
+        return 1 if z > 0 else 0
 
 
 def logistic_stochastic_gradient_descent(X, y, lr=0.0001):
@@ -32,6 +37,20 @@ def logistic_stochastic_gradient_descent(X, y, lr=0.0001):
     """
     n, d = X.shape
     theta = np.zeros(d + 1)
+
+    Xbar = np.hstack([np.ones((n, 1)), X])
+
+    for _ in range(10000):
+
+        # one pass over the data, in order
+        for xi, yi in zip(Xbar, y):
+            score = theta @ xi
+            gradient = -1 * yi * xi * sigmoid(-yi * score)
+            theta -= lr * gradient
+
+    return theta
+
+
     
     # TODO: Implement SGD. Train for 10,000 epochs
     return theta
