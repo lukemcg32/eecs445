@@ -12,8 +12,8 @@ def sigmoid(z):
     Args:
         z: A scalar or numpy array of any size
     """
-    # TODO: Implement the sigmoid function
-    pass 
+    return [1 if x > 0 else 0 for x in z]
+
 
 def logistic_stochastic_gradient_descent(X, y, lr=0.0001):
     """

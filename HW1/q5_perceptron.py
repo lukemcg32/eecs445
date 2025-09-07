@@ -16,8 +16,15 @@ def all_correct(X, y, theta, b):
 
     Returns true if the linear classifier specified by theta and b correctly classifies all examples
     """
-    # TODO: Return whether all points are correctly classified
-    pass
+
+    for i in range(len(X)):
+        for i in range(len(X)):
+            pred = np.dot(theta, X[i]) + b
+            if y[i] * pred <= 0:
+                return False
+    
+    return True
+
 
 
 def perceptron(X, y):
@@ -36,10 +43,20 @@ def perceptron(X, y):
     """
     n, d = X.shape
     theta = np.zeros((d,))
-    b = 0
+    b = 0.0
     alpha = np.zeros((n,))
 
-    # TODO: Implement the Perceptron algorithm 
+    updated = True
+    while updated:
+        updated = False
+        for i in range(n):
+            margin = y[i] * (np.dot(theta, X[i]) + b)
+            if margin <= 0:
+                theta += y[i] * X[i]
+                b += y[i]
+                alpha[i] += 1
+                updated = True
+
     return theta, b, alpha
 
 
@@ -63,4 +80,4 @@ def main(fname):
 
 
 if __name__ == '__main__':
-    main("dataset/q5.csv")
+    main('dataset/q5.csv')

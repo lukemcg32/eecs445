@@ -19,8 +19,10 @@ def calculate_squared_loss(X, y, theta):
     Returns:
         The squared loss for the given data and parameters
     """
-    # TODO: Implement the squared loss calculation
-    pass
+    n = X.shape[0]
+    preds = np.dot(X, theta) # maybe we need matrix mult??
+    residuals = preds - y
+    return 0.5 * np.dot(residuals, residuals) / n
 
 def ls_gradient_descent(X, y, learning_rate=0):
     """
