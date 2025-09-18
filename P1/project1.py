@@ -13,6 +13,8 @@ import yaml
 from matplotlib import pyplot as plt
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import MinMaxScaler
+from collections import defaultdict
 
 import helper
 
@@ -55,16 +57,23 @@ def generate_feature_vector(df: pd.DataFrame) -> dict[str, float]:
     
     # TODO: 1) Replace unknown values with np.nan
     # NOTE: pd.DataFrame.replace() may be helpful here, refer to documentation for details
-    df_replaced = None
+    df = df.copy()
+    df["Value"] = df["Value"].replace(-1, np.nan).astype(float)
 
-    # Extract time-invariant and time-varying features (look into documentation for pd.DataFrame.iloc)
-    static, timeseries = df.iloc[0:5], df.iloc[5:]
+    feature_dict: dict[str, float] = {}
 
-    feature_dict = {}
     # TODO: 2) extract raw values of time-invariant variables into feature dict
+    for var in static_variables:
+        vals = df.loc[df["Variable"] == var, "Value"].dropna()
+        feature_dict[var] = float(vals.iloc[0]) if not vals.empty else np.nan
 
-    # TODO  3) extract max of time-varying variables into feature dict
-    
+    # TODO: 3) extract max of time-varying variables into feature dict
+    ts = df[df["Variable"].isin(timeseries_variables)]
+    max_by_var = ts.groupby("Variable")["Value"].max()
+
+    for var in timeseries_variables:
+        feature_dict[f"max_{var}"] = float(max_by_var.get(var, np.nan))
+
     return feature_dict
 
 
@@ -78,7 +87,14 @@ def impute_missing_values(X: npt.NDArray) -> npt.NDArray:
     Returns:
         X: (n, d) feature matrix, without missing values
     """
-    raise NotImplementedError()  # TODO: implement
+    # raise NotImplementedError()  
+    # TODO: implement
+
+    df = pd.DataFrame(X).apply(pd.to_numeric, errors="coerce")
+    col_means = df.mean(axis=0, skipna=True).fillna(0.0)
+    df = df.fillna(col_means)
+    return df.to_numpy(dtype=float)
+    
 
 
 def normalize_feature_matrix(X: npt.NDArray) -> npt.NDArray:
@@ -92,7 +108,15 @@ def normalize_feature_matrix(X: npt.NDArray) -> npt.NDArray:
         X: (n, d) feature matrix with values that are normalized per column
     """
     # NOTE: sklearn.preprocessing.MinMaxScaler may be helpful
-    raise NotImplementedError()  # TODO: implement
+    # raise NotImplementedError()  
+    # TODO: implement
+    X = X.astype(float) #make sure we're doing float?
+
+    scaler = MinMaxScaler()
+    X_norm = scaler.fit_transform(X)
+    return X_norm
+
+    
 
 
 def get_classifier(
