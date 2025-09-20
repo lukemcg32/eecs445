@@ -14,8 +14,8 @@ from matplotlib import pyplot as plt
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
-from collections import defaultdict
-
+from sklearn.metrics import accuracy_score, precision_score, f1_score, roc_auc_score, average_precision_score, confusion_matrix
+from sklearn.model_selection import StratifiedKFold
 import helper
 
 __all__ = [
@@ -144,9 +144,14 @@ def get_classifier(
     # TODO (optional, but recommended): implement function based on docstring
 
     if loss == "logistic":
-        raise NotImplementedError()
+        return LogisticRegression(penalty=penalty, 
+                                      C=C, 
+                                      solver="liblinear" if penalty == "l1" else "lbfgs",
+                                      fit_intercept=False,
+                                      class_weight=class_weight,
+                                      random_state=seed)
     elif loss == "squared_error":
-        raise NotImplementedError()
+            return KernelRidge(alpha=1.0 / C, kernel=kernel, gamma=gamma)
     else:
         raise ValueError(f"Unknown loss function: {loss}")
 
@@ -180,7 +185,67 @@ def performance(
     # This is an optional but very useful function to implement.
     # See the sklearn.metrics documentation for pointers on how to implement
     # the requested metrics.
-    raise NotImplementedError()  # TODO: implement
+    
+    # helper to compute our score once to limit redundancy
+    def compute_once(X_local: np.ndarray, y_local: np.ndarray) -> float:
+        if hasattr(clf_trained, "decision_function"):
+            scores = clf_trained.decision_function(X_local)
+        else:
+            scores = clf_trained.predict(X_local)
+
+        # hard labels for discrete metrics
+        y_pred = np.where(scores >= 0.0, 1, -1)
+
+        if metric == "accuracy":
+            return float(accuracy_score(y_local, y_pred))
+        elif metric == "precision":
+            # 1: "positive", if zero div happens make it 0
+            return float(precision_score(y_local, y_pred, pos_label=1, zero_division=0))
+        elif metric in {"f1", "f1_score"}:
+            return float(f1_score(y_local, y_pred, pos_label=1, zero_division=0))
+        elif metric == "auroc":
+            return float(roc_auc_score(y_local, scores))
+        elif metric == "average_precision":
+            return float(average_precision_score(y_local, scores, pos_label=1))
+        elif metric == "sensitivity":
+            cm = confusion_matrix(y_local, y_pred, labels=[-1, 1])
+            fn = cm[1][0]
+            tp = cm[1][1]
+
+            # make sure we don't do zero division
+            return float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
+        elif metric == "specificity":
+            cm = confusion_matrix(y_local, y_pred, labels=[-1, 1])
+            tn = cm[0][0]
+            fp = cm[0][1]
+
+            # make sure we don't do zero division
+            return float(tn / (tn + fp)) if (tn + fp) > 0 else 0.0
+        else:
+            # hopefully we don't have to ever see this
+            import sys
+            print("Error: unrecognized metric", file=sys.stderr)
+            sys.exit(1)   # non-zero means error
+
+    if not bootstrap:
+        # compute return non-bootstrapped one time go
+        return compute_once(X, y_true)
+
+    rng = np.random.default_rng(seed)
+    B = 1000
+    n = len(y_true)
+    vals = []
+    for _ in range(B):
+        idx = rng.integers(0, n, size=n)
+        vals.append(compute_once(X[idx], y_true[idx]))
+    lo, med, hi = np.percentile(vals, [2.5, 50.0, 97.5])
+    return float(med), float(lo), float(hi)
+
+
+
+
+
+
 
 
 def cv_performance(
@@ -210,7 +275,25 @@ def cv_performance(
         a tuple containing (mean, min, max) cross-validation performance across the k folds
     """
     # NOTE: you may find sklearn.model_selection.StratifiedKFold helpful
-    raise NotImplementedError()  # TODO: implement
+    # raise NotImplementedError()  # TODO: implement
+    # sklearn.linear model.LogisticRegression
+
+    skf = StratifiedKFold(n_splits=k, shuffle=False) # for grading dont shuffle
+    scores = []
+
+    for train_idx, val_idx in skf.split(X, y):
+        X_tr, X_va = X[train_idx], X[val_idx]
+        y_tr, y_va = y[train_idx], y[val_idx]
+
+        classifier = clf
+        classifier.fit(X_tr, y_tr)
+
+        s = performance(classifier, X_va, y_va, metric=metric)  # no bootstrapping by default
+        scores.append(s)
+
+    return float(np.mean(scores)), float(np.min(scores)), float(np.max(scores))
+
+
 
 
 def select_param_logreg(
@@ -240,7 +323,31 @@ def select_param_logreg(
         average k-fold CV performance.
     """
     # NOTE: use your cv_performance function to evaluate the performance of each classifier
-    raise NotImplementedError()  # TODO: implement
+    # raise NotImplementedError()  # TODO: implement
+    best_score = -np.inf
+    best_C = C_range[0]
+    best_penalty = penalties[0]
+
+
+    for penalty in penalties:
+        for C in C_range:
+            clf = LogisticRegression(penalty=penalty, C=C, solver="liblinear", fit_intercept=False, random_state=seed)
+            mean_score, min_score, max_score = cv_performance(clf, X, y, metric=metric, k=k)
+
+            # best score, or smallest C
+            if (mean_score > best_score) or (round(mean_score, 6) == round(best_score, 6) and C < best_C):
+                best_score = mean_score
+                best_C = C
+                best_penalty = penalty
+    
+    return best_C, best_penalty
+
+
+
+
+
+
+
 
 
 def select_param_RBF(
@@ -295,16 +402,17 @@ def plot_weight(
         norm0 = []
         for C in C_range:
             # TODO: initialize clf with C and penalty
-            clf = None
+            clf = LogisticRegression(penalty=penalty, C=C, solver="liblinear", fit_intercept=False, random_state=seed)
             
             # TODO: fit clf to X and y
+            clf.fit(X, y)
             
             # TODO: extract learned coefficients from clf into w
             # NOTE: the sklearn.linear_model.LogisticRegression documentation will be helpful here
-            w = None
+            w = clf.coef_
             
             # TODO: count the number of nonzero coefficients and append the count to norm0
-            non_zero_count = None
+            non_zero_count = np.count_nonzero(w)
             norm0.append(non_zero_count)
 
         # This code will plot your L0-norm as a function of C

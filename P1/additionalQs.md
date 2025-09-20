@@ -56,3 +56,96 @@ max_Cholesterol      0.3261               0.0000
 
 
 
+2.a. 
+It might be beneficial to maintain class proportions across folds so that each once reflects the true distribution of positive an dnegative examples. Without consistent proportions, we might have unstable metrics or could lead to some misleading results. 
+
+
+
+2.b.
+C is the inverse of the regularization strength. When we have a small C, we have high bias. In contrast, when we have a large C, we have high variance. So, C makes our model more complex.
+
+
+2.c.
+Performance Measure     C           Penalty         Mean (Min, Max) CV Performance
+accuracy                0.100        L1             0.8606 (0.8594, 0.8625)
+precision               1.000        L2             0.6024 (0.1667, 1.0000)
+f1-score                0.001        L1             0.2456 (0.2418, 0.2466)
+auroc                   1.000        L2             0.7804 (0.7539, 0.8192)
+average_precision       1.000        L2             0.3923 (0.2893, 0.4965)
+sensitivity             0.001        L1             1.0000 (1.0000, 1.0000)
+specificity             0.001        L2             1.0000 (1.0000, 1.0000)
+
+At very small values of C, our model is very biased which makes it base predictions on a single class. This explains why in the results sensitivity and specificity reached 1.0 while other metrics with the same parameters dropped close to zero (not necessarily shown in the table). As C reaches the "medium" values, bias weakens in the training, and the model starts to fit the data a little more as seen in the auroc and accuracy scores. As C increases to 10, 100 and onwards, the model begins to have high variance and starts to overfit the data.
+
+I would optimize the AUROC because it evaluates performance across all possible thresholds and makes it more robust to class imbalance. Accuracy is definitely still a good measure to check in on, but the AUROC optimization will ensure we are generalizing well to new data.
+
+2.d.
+Performance Measure     Median        95% Confidence Interval
+           accuracy     0.8575        (0.8200, 0.8875)
+          precision     0.4167        (0.1429, 0.7273)
+           f1_score     0.1449        (0.0351, 0.2623)
+              auroc     0.7832        (0.7272, 0.8348)
+  average_precision     0.3586        (0.2472, 0.4760)
+        sensitivity     0.0877        (0.0200, 0.1703)
+        specificity     0.9798        (0.9645, 0.9942)
+
+2.e.
+*Include Plot here in PDF*
+
+In the plot, at small values of C nearly all weights are zero, and as C increases more features become active until most coefficients are nonzero. In contrast, the L2 penalty produces a nearly constant L0-norm, since it shrinks weights but rarely drives them exactly to zero. 
+
+2.f. 
+ Positive Coefficient  Feature Name    
+               4.1053 max_Bilirubin
+               2.5931       max_BUN
+               1.6193        max_HR
+               1.5566           Age
+
+ Negative Coefficient Feature Name
+              -2.7041      max_GCS
+              -2.0179    max_Urine
+              -0.9237     max_SaO2
+              -0.8589     max_HCO3
+
+
+2.g.
+In simple terms, if a coefficient's term is more positive the the model believes that the category contributes more towards +1 (patient death), if it is more negative the model believe it contributes more towards -1 (patient survival) and if it is closer to 0 the model believes it has little effect on the prediction.
+
+3.1. 
+*Include screenshot of work here in PDF*
+
+3.2.a.
+If W_p is a lot greater than W_n it means the model places much greater emphasis on correctly classifying positive cases and heavily penalizes false negatives. Under the hood, this shifts the decision boundary toward predicting more positives and will increase sensitivity and reduce specificity. Overall, the model will become more cautious about missing positive cases.
+
+3.2.b.
+Performance Measure     Median      95% Confidence Interval
+           accuracy     0.2400        (0.2024, 0.2850)
+          precision     0.1542        (0.1181, 0.1931)
+           f1_score     0.2671        (0.2112, 0.3237)
+              auroc     0.7406        (0.6781, 0.7977)
+  average_precision     0.3493        (0.2367, 0.4605)
+        sensitivity     1.0000        (1.0000, 1.0000)
+        specificity     0.1192        (0.0850, 0.1557)
+
+
+3.2.c.
+Sensitivity and Specificity are the two categories that are most drarastically changed. Sensitivity increases because the model is penalized for false negatives and is incentivized to predict positives when it maybe wouldn't have without the weights. On the flip side, the specificity decreases significantly because we have more false negatives.
+
+
+3.3.a.
+*Insert ROC_curves.png in PDF*
+
+3.3.b.
+One method would be to decrease the decision threshold when classifing data points. Typically, if a predicted probablilty is > 0.5 we label it as +1, but if the model is already fit on imbalanced data, we could lower the threshold to something like > 0.25 and limit the number of false negatives.
+
+
+
+
+
+
+
+
+
+
+
+
