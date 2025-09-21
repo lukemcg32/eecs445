@@ -124,7 +124,7 @@ def get_classifier(
     penalty: str | None = None,
     C: float = 1.0,
     class_weight: dict[int, float] | None = None,
-    kernel: str = "rbf",
+    kernel: str = "linear",
     gamma: float = 0.1,
 ) -> KernelRidge | LogisticRegression:
     """
@@ -151,7 +151,7 @@ def get_classifier(
                                       class_weight=class_weight,
                                       random_state=seed)
     elif loss == "squared_error":
-            return KernelRidge(alpha=1.0 / C, kernel=kernel, gamma=gamma)
+            return KernelRidge(alpha=(1.0 / 2.0*C), kernel=kernel, gamma=gamma)
     else:
         raise ValueError(f"Unknown loss function: {loss}")
 
@@ -193,7 +193,7 @@ def performance(
         else:
             scores = clf_trained.predict(X_local)
 
-        # hard labels for discrete metrics
+        # binary label for thresholds
         y_pred = np.where(scores >= 0.0, 1, -1)
 
         if metric == "accuracy":
@@ -240,9 +240,6 @@ def performance(
         vals.append(compute_once(X[idx], y_true[idx]))
     lo, med, hi = np.percentile(vals, [2.5, 50.0, 97.5])
     return float(med), float(lo), float(hi)
-
-
-
 
 
 
@@ -331,7 +328,8 @@ def select_param_logreg(
 
     for penalty in penalties:
         for C in C_range:
-            clf = LogisticRegression(penalty=penalty, C=C, solver="liblinear", fit_intercept=False, random_state=seed)
+
+            clf = get_classifier(loss="logistic", penalty=penalty, C=C)
             mean_score, min_score, max_score = cv_performance(clf, X, y, metric=metric, k=k)
 
             # best score, or smallest C
@@ -341,12 +339,6 @@ def select_param_logreg(
                 best_penalty = penalty
     
     return best_C, best_penalty
-
-
-
-
-
-
 
 
 
@@ -377,7 +369,30 @@ def select_param_RBF(
         average k-fold CV performance.
     """
     # NOTE: this function should be similar to your implementation of select_param_logreg
-    raise NotImplementedError()  # TODO: implement
+    #raise NotImplementedError()  
+    # TODO: implement
+    best_score = -np.inf
+    best_C = C_range[0]
+    best_gamma = gamma_range[0]
+
+
+    for gamma in gamma_range:
+        for C in C_range:
+
+            kernel = get_classifier(loss="squared_error", C=C, kernel="rbf", gamma=gamma)
+
+            mean_score, min_score, max_score = cv_performance(kernel, X, y, metric=metric, k=k)
+
+            # best score, or smallest C
+            if (mean_score > best_score) or (round(mean_score, 6) == round(best_score, 6) and C < best_C):
+                best_score = mean_score
+                best_C = C
+                best_gamma = gamma
+    
+    return best_C, best_gamma
+
+
+
 
 
 def plot_weight(

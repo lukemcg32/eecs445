@@ -90,7 +90,7 @@ Performance Measure     Median        95% Confidence Interval
         specificity     0.9798        (0.9645, 0.9942)
 
 2.e.
-*Include Plot here in PDF*
+*Include L0_Norm.png here in PDF*
 
 In the plot, at small values of C nearly all weights are zero, and as C increases more features become active until most coefficients are nonzero. In contrast, the L2 penalty produces a nearly constant L0-norm, since it shrinks weights but rarely drives them exactly to zero. 
 
@@ -112,7 +112,7 @@ In the plot, at small values of C nearly all weights are zero, and as C increase
 In simple terms, if a coefficient's term is more positive the the model believes that the category contributes more towards +1 (patient death), if it is more negative the model believe it contributes more towards -1 (patient survival) and if it is closer to 0 the model believes it has little effect on the prediction.
 
 3.1. 
-*Include screenshot of work here in PDF*
+*Include 3.1 handwritten here in PDF*
 
 3.2.a.
 If W_p is a lot greater than W_n it means the model places much greater emphasis on correctly classifying positive cases and heavily penalizes false negatives. Under the hood, this shifts the decision boundary toward predicting more positives and will increase sensitivity and reduce specificity. Overall, the model will become more cautious about missing positive cases.
@@ -139,9 +139,62 @@ Sensitivity and Specificity are the two categories that are most drarastically c
 One method would be to decrease the decision threshold when classifing data points. Typically, if a predicted probablilty is > 0.5 we label it as +1, but if the model is already fit on imbalanced data, we could lower the threshold to something like > 0.25 and limit the number of false negatives.
 
 
+4.1.a
+*Include 4.1.a. handwritten here in PDF*
+
+4.1.b.
+-------------------- Logistic -------------------
+           Metric  Median       95% Confidence Interval
+         accuracy  0.8575        (0.8200, 0.8875)
+        precision  0.4167        (0.1429, 0.7273)
+         f1_score  0.1449        (0.0351, 0.2623)
+            auroc  0.7829        (0.7276, 0.8351)
+average_precision  0.3591        (0.2483, 0.4765)
+      sensitivity  0.0877        (0.0200, 0.1703)
+      specificity  0.9798        (0.9645, 0.9942)
+
+--------------------- Ridge ---------------------
+           Metric  Median       95% Confidence Interval
+         accuracy  0.8700        (0.8350, 0.9000)
+        precision  0.7303        (0.3333, 1.0000)
+         f1_score  0.1562        (0.0384, 0.2857)
+            auroc  0.7600        (0.6985, 0.8181)
+average_precision  0.3463        (0.2361, 0.4541)
+      sensitivity  0.0877        (0.0200, 0.1703)
+      specificity  0.9943        (0.9853, 1.0000)
 
 
 
+There doesn't appear to be a large difference in performance between logistic regression and kernel ridge. Both models achieve good accuracy and specificity scores but very low sensitivity. This is likely due to the class imbalance in the data. Both are linear classifiers so their decision boundaries are likely about the same. The only noticeable differences are minimal differences in metrics like precision and AUROC because of the different loss functions.
+
+
+4.2.b.
+  Gamma         Mean   (Min, Max) CV Performance
+  0.001        0.7467   (0.6949, 0.8029)
+  0.010        0.7748   (0.7405, 0.8089)
+  0.100        0.7915   (0.7589, 0.8248)
+  1.000        0.7675   (0.7253, 0.7854)
+ 10.000        0.7485   (0.7194, 0.7840)
+100.000        0.7164   (0.6744, 0.7605)
+
+
+Cross-validation AUROC performance is best at gamma = 0.1 with a mean CV performance of 0.7915. For very small gamma like 0.001, the kernel is overly smooth and underfits while for a large gamma like 100, the kernel is too complex and overfits. Both of which lead to poor results. The sweet spot is the intermediate gamma values that strike the best balance between bias and variance and yield the strongest generalization.
+
+4.2.c.
+Best C: 1.0, Best Gamma: 0.1
+
+           Metric  Median       95% Confidence Interval
+         accuracy  0.8700        (0.8350, 0.9000)
+        precision  0.7303        (0.3333, 1.0000)
+         f1_score  0.1562        (0.0384, 0.2857)
+            auroc  0.7842        (0.7252, 0.8387)
+average_precision  0.3676        (0.2530, 0.4821)
+      sensitivity  0.0877        (0.0200, 0.1703)
+      specificity  0.9943        (0.9853, 1.0000)
+
+
+4.2.d
+Because the rbf kernel essentially corresponds to an infinite-dimensional implicit feature map, there's no finite coefficient vector by feature. With logistical regression we can call .coef_ to give us the weights by input feature (as we saw in question 2.f.), but this is not possible with KernelRidge rbf.
 
 
 
