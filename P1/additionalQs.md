@@ -79,6 +79,8 @@ At very small values of C, our model is very biased which makes it base predicti
 
 I would optimize the AUROC because it evaluates performance across all possible thresholds and makes it more robust to class imbalance. Accuracy is definitely still a good measure to check in on, but the AUROC optimization will ensure we are generalizing well to new data.
 
+
+
 2.d.
 Performance Measure     Median        95% Confidence Interval
            accuracy     0.8575        (0.8200, 0.8875)
@@ -180,6 +182,7 @@ There doesn't appear to be a large difference in performance between logistic re
 
 Cross-validation AUROC performance is best at gamma = 0.1 with a mean CV performance of 0.7915. For very small gamma like 0.001, the kernel is overly smooth and underfits while for a large gamma like 100, the kernel is too complex and overfits. Both of which lead to poor results. The sweet spot is the intermediate gamma values that strike the best balance between bias and variance and yield the strongest generalization.
 
+
 4.2.c.
 Best C: 1.0, Best Gamma: 0.1
 
@@ -197,8 +200,10 @@ average_precision  0.3676        (0.2530, 0.4821)
 Because the rbf kernel essentially corresponds to an infinite-dimensional implicit feature map, there's no finite coefficient vector by feature. With logistical regression we can call .coef_ to give us the weights by input feature (as we saw in question 2.f.), but this is not possible with KernelRidge rbf.
 
 
+Challenge write up:
+In the challenge section, I improved model performance by expanding the feature set beyond maximum values. Instead of using only the max for each variable, I extracted a richer set of summary statistics—minimum, mean, standard deviation, and last observed value. To further capture patient trajectory, I computed these summaries both over the full 48-hour period and within two clinically motivated windows: 0 to 24 hours and 24 to 48 hours after admission. This approach allowed the classifier to account for both baseline levels and short-term changes, which are often crucial signals in ICU outcomes. For example, the difference between first-day and second-day vitals can highlight deterioration that a single maximum would miss. This windowed feature engineering produced a more informative representation and led to stronger separation between patients who survived and those who did not.
 
+For hyperparameter tuning, I built a systematic grid search with cross-validation to evaluate penalties (L1, L2, and elastic-net) with their compatible solvers, a wide range of C values, and multiple class-weighting strategies. I optimized the parameter search on both F1 score and AUROC. The final configuration was L1 penalty with C=10, solver=liblinear, and class weights of WN=1 and WP=5.
 
-
-
+I especially valued applying GridSearchCV here, since I had prior exposure to it during my internship with Lumen Technologies. That experience made me more comfortable setting up multiple scoring metrics, nested parameter grids, and stratified folds. In this project, it allowed me to confirm that my final choice was not arbitrary but the result of systematic search across feasible configurations according to the sklearn documentation. Overall, the combination of trajectory-aware feature engineering and rigorous hyperparameter tuning produced a well-regularized, interpretable model suited for the challenge dataset.
 

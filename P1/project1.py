@@ -124,7 +124,7 @@ def get_classifier(
     penalty: str | None = None,
     C: float = 1.0,
     class_weight: dict[int, float] | None = None,
-    kernel: str = "linear",
+    kernel: str = "rbf",
     gamma: float = 0.1,
 ) -> KernelRidge | LogisticRegression:
     """
@@ -146,7 +146,7 @@ def get_classifier(
     if loss == "logistic":
         return LogisticRegression(penalty=penalty, 
                                       C=C, 
-                                      solver="liblinear" if penalty == "l1" else "lbfgs",
+                                      solver="liblinear",
                                       fit_intercept=False,
                                       class_weight=class_weight,
                                       random_state=seed)
@@ -433,12 +433,90 @@ def plot_weight(
         # This code will plot your L0-norm as a function of C
         plt.plot(C_range, norm0)
         plt.xscale("log")
+
     plt.legend([penalties[0], penalties[1]])
     plt.xlabel("Value of C")
     plt.ylabel("Norm of theta")
 
     plt.savefig("L0_Norm.png", dpi=200)
     plt.close()
+
+
+
+
+# adding more stats and calculating by window
+def generate_feature_vector_challenge(df: pd.DataFrame) -> dict[str, float]:
+
+    # Helper to return {min, mean, std, last} for a window
+    def window_stats(times: np.ndarray, values: np.ndarray) -> dict[str, float]:
+        
+        if values.size == 0:
+            return {"min": np.nan, "mean": np.nan, "std": np.nan, "last": np.nan}
+        else:
+            return {
+                "min": float(np.nanmin(values)),
+                "mean": float(np.nanmean(values)),
+                "std": float(np.nanstd(values)),
+                "last": float(values[np.nanargmax(times)])
+            }
+    
+    
+    def time_to_hours(t: str) -> float:
+            hh, mm = t.split(":")
+            return float(hh) + float(mm) / 60.0
+
+
+    static_variables = config["static"]
+    timeseries_variables = config["timeseries"]
+
+    # copy & clean
+    df = df.copy()
+    df["Value"] = df["Value"].replace(-1, np.nan).astype(float)
+
+    # apply time_to_hours to data
+    df["hours"] = df["Time"].astype(str).map(time_to_hours)
+
+    feat: dict[str, float] = {}
+
+    # take first value for statics
+    for var in static_variables:
+        vals = df.loc[df["Variable"] == var, "Value"].dropna()
+        feat[var] = float(vals.iloc[0]) if not vals.empty else np.nan
+
+    # summaries overall + windowed 0–24 hrs and 24–48 hrs
+    ts = df[df["Variable"].isin(timeseries_variables)]
+
+
+    for var in timeseries_variables:
+        # filter for curr var and sort by hours for windowing
+        sub = ts[ts["Variable"] == var][["hours", "Value"]].sort_values("hours")
+        t = sub["hours"].to_numpy()
+        v = sub["Value"].to_numpy()
+
+        # overall summaries (min/mean/std/last)
+        stat_summary = window_stats(t, v)
+
+        # iterate through stats and add to feat along with value
+        for stat, val in stat_summary.items():
+            feat[f"{stat}_{var}"] = val
+
+        # create new category for first24 + stat + var
+        idx_0_24 = (t >= 0) & (t < 24)
+        win_0_24 = window_stats(t[idx_0_24], v[idx_0_24])
+        for stat, val in win_0_24.items():
+            feat[f"first24_{stat}_{var}"] = val
+
+        # create new category for 24-48 + stat + var
+        idx_24_48 = (t >= 24) & (t <= 48)
+        win_24_48 = window_stats(t[idx_24_48], v[idx_24_48])
+        for stat, val in win_24_48.items():
+            feat[f"last24_{stat}_{var}"] = val
+
+    return feat
+
+
+
+    
 
 
 def main():

@@ -69,6 +69,54 @@ def load_features(
     return X, df_labels, features_df.columns.tolist()
 
 
+# copy and pasted to add a generate_feature_vector_challenge
+def load_features_challenge(
+    split: Literal["training_subset", "training_full", "challenge"],
+    n_jobs: int = -1,
+) -> tuple[npt.NDArray, pd.DataFrame, list[str]]:
+    """Use project1 functions to load and preprocess the feature vectors for a given split.
+
+    Args:
+        split: What subset of data indices to load.
+        n_jobs: How many CPU cores to use when multiprocessing; defaults to all available cores.
+
+    Returns:
+        Tuple of the feature matrix, label dataframe, and feature names.
+    """
+    
+    # get the indices of the correct split
+    df_labels = pd.read_csv("data/labels.csv")
+    match split:
+        case "training_subset":
+            df_labels = df_labels[:2_000]
+        case "training_full":
+            df_labels = df_labels[:10_000]
+        case "challenge":
+            df_labels = df_labels[10_000:]
+        case _:
+            raise ValueError(f"Invalid split \"{split}\"")
+    
+    def process_data(index: int) -> dict[str, float]:
+        """Helper function to process a single yaml data file in parallel."""
+        return project1.generate_feature_vector_challenge(pd.read_csv(f"data/files/{index}.csv"))
+    
+    # load the feature vectors into a DataFrame in parallel
+    features_df = pd.DataFrame(Parallel(n_jobs=n_jobs)(
+        delayed(process_data)(i)
+        for i in tqdm(df_labels["RecordID"], desc=f"Loading {split} data")
+    ))  # type: ignore
+    # sort feature columns alphabetically by name
+    features_df = features_df.sort_index(axis=1)
+    print(f"Loaded n = {len(features_df)} feature vectors")
+    
+    # process the feature DataFrame using the project1 functions
+    X = features_df.values
+    X = project1.impute_missing_values(X)
+    X = project1.normalize_feature_matrix(X)
+    
+    return X, df_labels, features_df.columns.tolist()
+
+
 def get_project_data(
     n_jobs: int = -1,
 ) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, list[str]]:
@@ -115,9 +163,9 @@ def get_challenge_data() -> tuple[npt.NDArray, npt.NDArray, npt.NDArray, list[st
         Tuple of X_train, X_challenge, y_train, and feature_names.
     """
     
-    X_train, df_labels_train, feature_names = load_features("training_full")
+    X_train, df_labels_train, feature_names = load_features_challenge("training_full")
     y_train = df_labels_train["30-day_mortality"].to_numpy()
-    X_challenge, _, _ = load_features("challenge")
+    X_challenge, _, _ = load_features_challenge("challenge")
     return X_train, y_train, X_challenge, feature_names
 
 
