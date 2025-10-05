@@ -109,7 +109,7 @@ def save_checkpoint(model, epoch, checkpoint_dir):
 
 
 if __name__ == '__main__':
-    tr_loader, va_loader, te_loader = get_train_val_test(batch_size=64)
+    tr_loader, va_loader, te_loader = get_train_val_test(batch_size=32) # train on 32 instead and look at performance
     
     torch.random.manual_seed(0)
     np.random.seed(0)

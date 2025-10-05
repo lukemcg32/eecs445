@@ -33,9 +33,9 @@ class TinyTransformer:
         """
         # TODO: Compute Q, K, V matrices using linear algebra operations
         # Replace with your implementation
-        Q = np.zeros((X.shape[0], X.shape[1], self.d_k))  # Query matrix
-        K = np.zeros((X.shape[0], X.shape[1], self.d_k))  # Key matrix
-        V = np.zeros((X.shape[0], X.shape[1], self.d_v))  # Value matrix
+        Q = X @ self.W_Q
+        K = X @ self.W_K
+        V = X @ self.W_V
 
         return Q, K, V
 
@@ -54,7 +54,9 @@ class TinyTransformer:
         # NOTE: the batch_size is 1 in this toy example
         # TODO Compute the attention scores
         # Replace with your implementation
-        scores = np.zeros((Q.shape[0], Q.shape[1], K.shape[1]))
+
+        # reshape to batch_size, d_k, seq_len
+        scores = np.matmul(Q, np.transpose(K, (0, 2, 1))) / np.sqrt(self.d_k)
 
         print("--------------q8.b--------------")
         print("attention scores for the word 'ML': ", scores[0, 2, :])
@@ -75,8 +77,10 @@ class TinyTransformer:
         # then use the softmax function to compute the attention weights
         # TODO Compute the attention weights
         # Replace with your implementation
-        exp_scores = np.zeros((scores.shape[0], scores.shape[1], scores.shape[2]))
-        weights = np.zeros((scores.shape[0], scores.shape[1], scores.shape[2]))
+
+        m = np.max(scores, axis=-1, keepdims=True)
+        exp_scores = np.exp(scores - m)
+        weights = exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)
 
         print("--------------q8.c--------------")
         print("attention weights for the word 'ML': ", weights[0, 2, :])
@@ -96,7 +100,7 @@ class TinyTransformer:
         """
         # TODO: Compute the context vector as a weighted sum of the value vectors by matrix multiplication
         # Replace with your implementation
-        context = np.zeros((weights.shape[0], weights.shape[1], V.shape[2]))
+        context = weights @ V
 
         print("--------------q8.c--------------")
         print("context-aware representation (context vector) for the word 'ML': ", context[0, 2, :])

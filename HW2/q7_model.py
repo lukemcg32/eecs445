@@ -17,9 +17,9 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
 
         # TODO: Uncomment the next two lines and replace the ???s
-        # self.lstm = nn.LSTMCell(???, ???)
-        # self.fc = nn.Linear(???, ???)
-        
+        self.lstm = nn.LSTMCell(input_size, hidden_size)
+        self.fc = nn.Linear(hidden_size, output_size)
+
         self.init_weights()
 
     def init_weights(self):
@@ -33,6 +33,17 @@ class RNN(nn.Module):
         # loop over the parameters of the LSTMCell. For the fully connected 
         # layer, use xavier_uniform_ to initialize the weights and constant_ to 
         # initialize the bias to zero.
+
+        for name, param in self.lstm.named_parameters():
+            if 'weight' in name:
+                nn.init.xavier_uniform_(param.data)
+            elif 'bias' in name:
+                nn.init.constant_(param.data, 0.0)
+
+        nn.init.xavier_uniform_(self.fc.weight.data)
+        nn.init.constant_(self.fc.bias.data, 0.0)
+
+            
 
 
 
@@ -59,11 +70,16 @@ class RNN(nn.Module):
         # state. After the loop, you need to apply the fully connected layer to 
         # the hidden state and apply the sigmoid activation function
 
+        for t in range(T):
+            h_t, c_t = self.lstm(x[:, t, :], (h_t, c_t)) # use previous state
 
-        z = torch.tensor(0) # Replace with your implementation 
+        # map final hidden to output
+        z = self.fc(h_t)
 
+        z = torch.sigmoid(z)
 
         return z
+    
 
     def init_hidden(self, N):
         """
@@ -78,7 +94,7 @@ class RNN(nn.Module):
 
         # TODO :Initialize the hidden state and cell state
 
-        hidden = (0,0) # Replace with your implementation
+        hidden = torch.zeros(N, self.hidden_size)
+        cell = torch.zeros(N, self.hidden_size)
 
-
-        return hidden
+        return (hidden, cell)
