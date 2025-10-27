@@ -61,12 +61,20 @@ class ImageStandardizer:
     def fit(self, X: npt.NDArray) -> None:
         """Calculate per-channel mean and standard deviation from dataset X."""
         # TODO: 1(a) - Complete this function
-        raise NotImplementedError()
+        X = np.asarray(X)
+
+        self.image_mean = X.mean(axis=(0, 1, 2))
+        self.image_std = X.std(axis=(0, 1, 2))
     
     def transform(self, X: npt.NDArray) -> npt.NDArray:
         """Return standardized dataset given dataset X."""
         # TODO: 1(a) - Complete this function
-        raise NotImplementedError()
+
+        # won't work if fit() isn't called first
+        if self.image_mean is None or self.image_std is None:
+            raise RuntimeError("Call fit(X) before transform(X).")
+
+        return (X - self.image_mean) / self.image_std
 
 
 class DogsDataset(Dataset):
