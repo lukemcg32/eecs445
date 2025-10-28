@@ -276,7 +276,7 @@ def train_epoch(
         logits = model(X)
         loss = criterion(logits, y)
         loss.backward()
-        optimizer.step()  
+        optimizer.step()
 
 
 def predictions(logits: torch.Tensor) -> torch.Tensor:

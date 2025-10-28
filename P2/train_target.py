@@ -35,7 +35,26 @@ def freeze_layers(model: torch.nn.Module, num_layers: int = 0) -> None:
     """
     # TODO: 3(e) - modify model with the given layers frozen, e.g. if num_layers=2, freeze CONV1 and CONV2
     #       Hint: https://pytorch.org/docs/master/notes/autograd.html
-    raise NotImplementedError()
+
+    # nothing to do
+    if num_layers == 0:
+        return
+
+    conv_count = 0
+
+    for module in model.modules():
+
+        # only freeze conv layers
+        if isinstance(module, torch.nn.Conv2d):
+            conv_count += 1
+
+            if conv_count <= num_layers:
+                for param in module.parameters():
+                    param.requires_grad = False
+
+            else:
+                break
+    
 
 
 def train(
@@ -61,8 +80,8 @@ def train(
     set_random_seed()
     
     # TODO: 3(e) - define loss function, and optimizer
-    criterion = None
-    optimizer = None
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     print("Loading target model with", num_layers, "layers frozen")
     model, start_epoch, stats = restore_checkpoint(model, model_name)
@@ -85,7 +104,7 @@ def train(
     prev_val_loss = stats[0][1]
 
     # TODO: 3(e) - patience for early stopping, see appendix B 
-    patience = None
+    patience = 5
     curr_patience = 0
 
     # Loop over the entire dataset multiple times

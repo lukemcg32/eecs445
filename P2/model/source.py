@@ -25,26 +25,33 @@ class Source(nn.Module):
         super().__init__()
 
         # TODO: 3(a) - define each layer
-        self.conv1 = None
-        self.pool = None
-        self.conv2 = None
-        self.conv3 = None
-        self.fc1 = None
+        self.conv1 = nn.Conv2d(3, 16, 5, 2, padding=2)
+        self.pool = nn.MaxPool2d(2, stride=2)
+        self.conv2 = nn.Conv2d(16, 64, 5, 2, padding=2)
+        self.conv3 = nn.Conv2d(64, 8, 5, 2, padding=2)
+
+        # output 8 vs the target's 2
+        self.fc1 = torch.nn.Linear(32, 8)
 
         self.init_weights()
-        raise NotImplementedError()
 
+    # same exact implemetation as target
     def init_weights(self) -> None:
         """Initialize model weights."""
         set_random_seed()
 
         for conv in [self.conv1, self.conv2, self.conv3]:
             # TODO: 3(a) - initialize the parameters for the convolutional layers
-            pass
+            v = sqrt(1.0 / (5 * 5 * conv.in_channels))
+            nn.init.normal_(conv.weight, mean=0.0, std=v)
+            nn.init.constant_(conv.bias, 0.0)
         
         # TODO: 3(a) - initialize the parameters for [self.fc1]
-        raise NotImplementedError() 
+        v = (1.0 / self.fc1.in_features) ** 0.5
+        nn.init.normal_(self.fc1.weight, mean=0.0, std=v)
+        nn.init.constant_(self.fc1.bias, 0.0)
 
+    # again same implementation as target
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Perform forward propagation for a batch of input examples. Pass the input array
@@ -63,4 +70,14 @@ class Source(nn.Module):
         N, C, H, W = x.shape
 
         # TODO: 3(a) - forward pass
-        raise NotImplementedError()
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = F.relu(self.conv3(x))
+
+        # flatten before putting through fully connected layer
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+
+        return x

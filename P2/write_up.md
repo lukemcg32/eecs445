@@ -69,3 +69,38 @@ We see some evidence of overfitting with respect to training vs validation accur
 
 2.g.iii. 
 The positive labeled data has a red and black box in the upper right hand corner. It is possible that the model learned that the black box iin the upper right hand corner was the key indication of whether or not the dog in a collie and that the black and red boxes are not consistent against the two breeds in the test set.
+
+3.a.
+* include ss of source.py code *
+
+3.b. 
+* include ss of source_train.py code *
+
+3.c. 
+Epoch with lowest val loss = 1.7623 is epoch 9.
+* include ss of 3c_source_training_plot_patience=10.png *
+
+3.d. 
+* include ss of 3d_confusion_matrix.png *
+The breeds the model is most accurate are Samoyed, Great Dane, Dalmation, and Yorkshire Terrier. The least accurate are Miniature Poodle, Chihuahua, and Siberian Husky (worst). Looking into bad performance, it looks like our model misclassifies Miniature Poodles as Yorkies, Chihuahua as samoyeds, and is confused about Siberian Huskies but classifies them the most often as Saint Bernards.
+
+Miniature poodles and yorkies are both small and can have similar coloring. Siberian Huskies and Saint Bernards are both large dogs but do not have many other similar traits. Chihuahuas and Samoyeds have very little resemblence, so our model doesn't seem to have learned the Chihuahua characteristics.
+
+3.e.
+* include ss of train_target.py *
+
+3.f.
+                    Train AUROC     Val AUROC       Test AUROC
+Freeze all:             0.8688        0.8779            0.7764  
+Freeze first two:       1.0           0.9868            0.776 
+Freeze first:           1.0           0.9963            0.7548
+Freeze none:            1.0           0.9989            0.7716
+--------------------------------------------------------------
+No pretraining:         1.0           0.9975            0.7668
+
+From what we see above, freezing no layers, freezing two layers, and freezing all convolutional layers improved our models' test AUROC. This makes sense because if we only freeze the first layer, we hurt the model because it feeds in only low level edge detectors and does not provide much of the learned representation. Freezing the first two and all three convolutional layers gives the model more transfer representations and we see the best performance with these two (freezing all layers is the best). Freezing no layers also shows improvement because the model has full flexibility to learn and starts at the weights from the learned representations.
+
+The observation that more than freezing two or all layers outperforms freezing no layers checks out because the model retrains some valueable weight information from the transfer because it is given so much flexibility.
+
+
+4.
