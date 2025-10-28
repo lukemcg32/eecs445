@@ -31,3 +31,41 @@ Total learnable params = 39,754
 
 2.b.
 * include ss of target.py code *
+
+2.c. 
+* include ss of train_common.py code *
+
+2.d.
+* include ss of train_cnn.py code *
+
+2.e.
+* include ss of train_common.py code *
+
+2.f.i.
+The validation loss wiggles because the model sees different mini-batches of data each epoch, and the randomness in which samples are grouped together can temporarily push the loss up even if training is going well overall. The optimizer also makes updates based only on the current batch rather than the entire dataset, which introduces noise into each step. Since the model starts from randomly initialized weights, early training is especially unstable and sensitive to batch composition. All of this randomness naturally leads to small fluctuations in the validation loss.
+
+2.f.ii.
+With patience=5, the model stopped at epoch 18. With patience=10, the model stopped at epoch 23. The two different stopping points appear to do about the same. Looking at the actual epochs though, the model with patience=10 goes 5 more epochs, which means all of the additional epochs past patience=5 are worse than our best validation accuracy. Therefore, I would say the model with patience=5 is better.
+
+* inlcude ss of cnn_training_plot_patience=5.png *
+* inlcude ss of cnn_training_plot_patience=10.png *
+
+2.f.iii.
+2 * 2 * 64 = 256
+
+            Epoch    Training AUROC      Validation AUROC
+8  filters:   13          1.0                  0.9975
+64 filters:   8           1.0                  0.9959
+
+The model with a 64 layer output from the third convolution layer is more complex and converges faster. Looking at the validation AUROC, it seems as though the 8 layer model does slightly better generalizing to unseen data. This adds up because the variance of the more complex model is expected to rise slightly as we add complexity, which is what we did here. This leads to slightly worse generalization which is shown in the results.
+
+2.g.i.
+            Training     Validation     Testing
+Accuracy      1.0          0.9667         0.56
+AUROC         1.0          0.9975         0.7668
+
+2.g.ii.
+We see some evidence of overfitting with respect to training vs validation accuracy and AUROC, but it doesn't seem to be doing too poorly. The models inability to effectively generalizer to unseen data in the tetsing accuracy and AUROC show the model's tendency to overfit.
+
+2.g.iii. 
+The positive labeled data has a red and black box in the upper right hand corner. It is possible that the model learned that the black box iin the upper right hand corner was the key indication of whether or not the dog in a collie and that the black and red boxes are not consistent against the two breeds in the test set.

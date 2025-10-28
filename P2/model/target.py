@@ -24,11 +24,15 @@ class Target(nn.Module):
 
         # TODO: 2(b) - define each layer
 
-        self.conv1 = torch.nn.Conv2d(3, 16, 5, 2, padding='same')
+        # padding of 2 satisfies same for all three
+        self.conv1 = torch.nn.Conv2d(3, 16, 5, 2, padding=2)
         self.pool = torch.nn.MaxPool2d(2, stride=2)
-        self.conv2 = torch.nn.Conv2d(16, 64, 5, 2, padding='same')
-        self.conv3 = torch.nn.Conv2d(64, 8, 5, 2, padding='same')
+        self.conv2 = torch.nn.Conv2d(16, 64, 5, 2, padding=2)
+        self.conv3 = torch.nn.Conv2d(64, 8, 5, 2, padding=2)
         self.fc_1 = torch.nn.Linear(32, 2)
+
+        # self.conv3 = torch.nn.Conv2d(64, 64, 5, 2, padding=2)
+        # self.fc_1 = torch.nn.Linear(256, 2)
 
         self.init_weights()
 
@@ -56,5 +60,7 @@ class Target(nn.Module):
         x = F.relu(self.conv3(x))
 
         # flatten before putting through fully connected layer
-        x = torch.flatten(x)
+        x = torch.flatten(x, 1)
         x = self.fc_1(x)
+
+        return x
