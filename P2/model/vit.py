@@ -84,7 +84,16 @@ class TransformerEncoder(nn.Module):
         """
         # TODO: 4(d) - Define the forward pass of the Transformer Encoder block
         # NOTE: Don't forget about the residual connections!
-        raise NotImplementedError()
+
+        # LayerNorm -> MHA
+        attn_out = self.multi_head_attention(self.norm1(x))
+        x = x + attn_out # residual connection
+
+        # MLP
+        mlp_out = self.mlp(self.norm2(x))
+        x = x + mlp_out
+
+        return x
 
 
 class MultiHeadAttention(nn.Module):
@@ -163,6 +172,8 @@ class MultiHeadAttention(nn.Module):
                 v = W_v(sequence) # (N, d) @ (d, d/H) -> (N, d/H)
 
                 # TODO: 4(c) - Perform scaled dot product self attention, refer to the formula in the spec
+                inside = (q @ k.T) / self.scale_factor
+                attention = self.softmax(inside) @ v
 
                 # Log the current attention head's attention values
                 seq_result.append(attention)
@@ -257,8 +268,7 @@ class ViT(nn.Module):
         patches = patchify(X,self.num_patches)
 
         # TODO: 4(e) - Get linear projection of each patch to a token (hint: the necessary layers might already be defined!)
-        raise NotImplementedError()
-        embedded_patches = None
+        embedded_patches = self.patch_to_token(patches)
 
         # Add the classification (sometimes called 'cls') token to the tokenized_patches
         all_tokens = torch.stack([torch.vstack((self.cls_token, embedded_patches[i])) for i in range(len(embedded_patches))])
@@ -268,8 +278,9 @@ class ViT(nn.Module):
         all_tokens = all_tokens + pos_embed
 
         # TODO: 4(e) - run the positionaly embedded tokens through all transformer blocks 
-        raise NotImplementedError()
         # stored in self.transformer_blocks
+        for block in self.transformer_blocks:
+            all_tokens = block(all_tokens) 
 
         # Extract the classification token and put through mlp
         class_token = all_tokens[:, 0]

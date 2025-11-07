@@ -28,8 +28,18 @@ def main():
     )
 
     # TODO: 4(g) - Define the ViT Model according to the appendix D
+    model = ViT(
+        num_patches=16,
+        num_blocks=2,
+        num_hidden=16,
+        num_heads=2,
+        num_classes=2,
+        chw_shape=(3, 64, 64)
+    )
 
     # TODO: 4(g) - define loss function, and optimizer
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     
     print(f"Number of float-valued parameters: {count_parameters(model)}")
 
@@ -58,8 +68,8 @@ def main():
     prev_val_loss = stats[0][1]
 
     # TODO: 4(h) - define patience for early stopping
-    patience = None
-    curr_patience = None
+    patience = 5
+    curr_patience = 0
 
     # Loop over the entire dataset multiple times
     epoch = start_epoch
@@ -91,7 +101,7 @@ def main():
     plt.savefig(f"vit_training_plot_patience={patience}.png", dpi=200)
     plt.ioff()
     plt.show()
-    raise NotImplementedError()
+    # raise NotImplementedError()
 
 
 if __name__ == "__main__":

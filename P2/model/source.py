@@ -25,10 +25,10 @@ class Source(nn.Module):
         super().__init__()
 
         # TODO: 3(a) - define each layer
-        self.conv1 = nn.Conv2d(3, 16, 5, 2, padding=2)
-        self.pool = nn.MaxPool2d(2, stride=2)
-        self.conv2 = nn.Conv2d(16, 64, 5, 2, padding=2)
-        self.conv3 = nn.Conv2d(64, 8, 5, 2, padding=2)
+        self.conv1 = nn.Conv2d(3, 16, 5, kernel_size=2, padding=2)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(16, 64, 5, kernel_size=2, padding=2)
+        self.conv3 = nn.Conv2d(64, 8, 5, kernel_size=2, padding=2)
 
         # output 8 vs the target's 2
         self.fc1 = torch.nn.Linear(32, 8)
@@ -47,7 +47,7 @@ class Source(nn.Module):
             nn.init.constant_(conv.bias, 0.0)
         
         # TODO: 3(a) - initialize the parameters for [self.fc1]
-        v = (1.0 / self.fc1.in_features) ** 0.5
+        v = sqrt(1.0 / self.fc1.in_features)
         nn.init.normal_(self.fc1.weight, mean=0.0, std=v)
         nn.init.constant_(self.fc1.bias, 0.0)
 
