@@ -72,7 +72,27 @@ def adaboost(X: np.ndarray, labels: np.ndarray, num_iterations: int) -> tuple[li
     for i in range(num_iterations):
         feature, threshold, operator = best_decision_stump(w, X, labels)
         print(f"decision stump {i}: x_{feature} {operator} {threshold}")
+
         # TODO: implement the rest of the AdaBoost algorithm
+        preds = stump_classification_result(feature, threshold, operator, X)
+
+        err = float(w @ (preds != labels))
+
+        eps = 1e-12
+        err = np.clip(err, eps, 1 - eps)
+
+        a = np.log((1 - err) / err) / 2
+
+        w = w * np.exp(-a * labels * preds)
+
+        w = w / w.sum()  # normalize
+
+        functions.append((feature, threshold, operator))
+
+        alpha[i] = a
+
+        print(f"iteration {i}: stump h(x)=sign({operator} {threshold} on x_{feature}), "
+              f"err={err:.4f}, alpha={a:.5f}")
 
     return functions, alpha
 
@@ -89,7 +109,17 @@ def classify(functions: list[tuple[int, float, str]], alpha: np.ndarray, X: np.n
         predicted {-1, 1} labels
     """
     # TODO: implement classification using the trained ensemble
-    raise NotImplementedError()
+
+    if not functions:
+        return np.ones(X.shape[0], dtype=int)
+
+    F = np.zeros(X.shape[0], dtype=float)
+    for a, (feature, threshold, compare) in zip(alpha, functions):
+        F += a * stump_classification_result(feature, threshold, compare, X)
+
+    y_hat = np.sign(F)
+    y_hat[y_hat == 0] = 1
+    return y_hat.astype(int)
 
 
 def calculate_loss(X: np.ndarray, y: np.ndarray, functions: list[tuple[int, float, str]], alpha: np.ndarray) -> float:

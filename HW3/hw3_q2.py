@@ -26,20 +26,33 @@ class GradientBoostingClassifier445:
     def fit(self, X: npt.NDArray, y: npt.NDArray) -> GradientBoostingClassifier445:
         self.init_estimator = None
         # TODO: initialize base score to the log-odds of the positive class
-        self.init_estimator = None
+        p = np.mean(y)
+        self.init_estimator = np.log(p / (1 - p))
 
         # initial predictions
         F_m = np.full(y.shape, self.init_estimator)
         self.loss = []
         for _ in range(self.n_estimators):
-            model = None
-            current_loss = None
-            
-            # TODO: compute pseudo-residuals
-            # TODO: fit a DecisionTreeRegressor to the residuals with random_state=445
-            # TODO: update ensemble predictions
-            # TODO: calculate the current loss
 
+            # TODO: compute pseudo-residuals xx
+            # TODO: fit a DecisionTreeRegressor to the residuals with random_state=445 xx
+            # TODO: update ensemble predictions xx
+            # TODO: calculate the current loss xx
+
+            # pseudo-reseduals
+            y_hat = self._sigmoid(F_m)
+            residuals = y - y_hat
+
+            # fit model
+            model = DecisionTreeRegressor(max_depth=self.max_depth, random_state=445)
+            model.fit(X, residuals)
+
+            # update preds
+            F_m = F_m + self.learning_rate * model.predict(X)
+
+            # calc loss
+            current_loss = self.binary_cross_entropy(y, self._sigmoid(F_m))
+            
             # save the model and loss
             self.models.append(model)
             self.loss.append(current_loss)

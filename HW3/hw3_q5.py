@@ -25,12 +25,14 @@ def visualize_kmeans(data: npt.NDArray, n_clusters: int, init: str) -> None:
     # - Set argument init ('random' or 'k-means++') to init
     # - Set random_state to 95
     # - Set n_init to 10
-    kmeans = None
+    kmeans = KMeans(n_clusters=n_clusters, init=init, random_state=95, n_init=10)
 
     # Fit data to obtain clusters
     kmeans.fit(data)
 
     # TODO: Print final value of objective function
+    print(f"[{init}] k={n_clusters} objective: {kmeans.inertia_:.6f}")
+
 
     # Plot each cluster on the same axes
     plt.figure()
@@ -47,11 +49,13 @@ def plot_inertia(X: npt.NDArray, init: str) -> None:
     """
 
     n_clusters = np.arange(2, 13)
+
     inertias = []
     for k in n_clusters:
         # Keep the random state at 95 for clearer results
         clf = KMeans(k, init=init, random_state=95).fit(X)
         # TODO: Add the inertia for each fit classifier to the list of inertias
+        inertias.append(clf.inertia_)
 
     plt.figure()
     plt.plot(n_clusters, inertias, linestyle="-")
@@ -66,6 +70,8 @@ if __name__ == "__main__":
     X = pd.read_csv("q5_data/data.csv").to_numpy()
 
     # TODO: Implement visualize_kmeans and run the script with the appropriate init value above
+    visualize_kmeans(X, n_clusters=8, init="k-means++")
+    visualize_kmeans(X, n_clusters=8, init="random")
 
     # TODO: Implement plot_inertia to generate a plot of KMeans losses with different numbers of clusters
     plot_inertia(X, "k-means++")
